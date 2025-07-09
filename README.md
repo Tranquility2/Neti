@@ -2,10 +2,14 @@
 
 A fast network scanner that finds reachable hosts on a subnet using ICMP ping.
 
-## Usage
+## Quick Start
 
 ```bash
-go run *.go 192.168.1.0/24
+# Setup
+make deps
+
+# Run a scan
+make run-sudo SUBNET=192.168.1.0/24
 ```
 
 **Note**: Requires sudo for raw ICMP sockets.
