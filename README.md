@@ -5,7 +5,7 @@ A fast network scanner that finds reachable hosts on a subnet using ICMP ping.
 ## Usage
 
 ```bash
-go run main.go 192.168.1.0/24
+go run *.go 192.168.1.0/24
 ```
 
 **Note**: Requires sudo for raw ICMP sockets.
@@ -28,7 +28,7 @@ Scan complete.
 ## Installation
 
 ```bash
-go build -o neti main.go
+go build -o neti *.go
 ```
 
 ## Features
