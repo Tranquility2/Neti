@@ -66,11 +66,13 @@ func scanSubnet(ips []string) {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var reachableIPs []string
+	var completed int
 
 	// Limit concurrent pings to avoid overwhelming the system
 	semaphore := make(chan struct{}, 20)
+	total := len(ips)
 
-	fmt.Printf("Scanning %d IPs...\n", len(ips))
+	fmt.Printf("Scanning %d IPs...\n", total)
 
 	for _, ip := range ips {
 		wg.Add(1)
@@ -84,10 +86,18 @@ func scanSubnet(ips []string) {
 				reachableIPs = append(reachableIPs, ip)
 				mu.Unlock()
 			}
+
+			// Update progress
+			mu.Lock()
+			completed++
+			progress := float64(completed) / float64(total) * 100
+			fmt.Printf("\rProgress: %d/%d (%.1f%%) - Found %d hosts", completed, total, progress, len(reachableIPs))
+			mu.Unlock()
 		}(ip)
 	}
 
 	wg.Wait()
+	fmt.Println() // New line after progress
 
 	// Sort results for consistent output
 	sort.Slice(reachableIPs, func(i, j int) bool {
