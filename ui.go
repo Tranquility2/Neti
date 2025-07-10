@@ -45,18 +45,18 @@ func (ui *UI) ShowResults(result *ScanResult) {
 	}
 
 	fmt.Printf("\nFound %d reachable hosts:\n", len(result.ReachableHosts))
-	fmt.Println("┌─────┬─────────────────┬───────────────────┬────────┐")
-	fmt.Println("│  #  │ IP Address      │ MAC Address       │ Status │")
-	fmt.Println("├─────┼─────────────────┼───────────────────┼────────┤")
+	fmt.Println("┌─────┬─────────────────┬───────────────────┐")
+	fmt.Println("│  #  │ IP Address      │ MAC Address       │")
+	fmt.Println("├─────┼─────────────────┼───────────────────┤")
 
 	for i, host := range result.ReachableHosts {
 		mac := host.MAC
 		if mac == "" {
 			mac = "Unknown"
 		}
-		fmt.Printf("│ %3d │ %-15s │ %-17s │   ✓    │\n", i+1, host.IP, mac)
+		fmt.Printf("│ %3d │ %-15s │ %-17s │\n", i+1, host.IP, mac)
 	}
 
-	fmt.Println("└─────┴─────────────────┴───────────────────┴────────┘")
+	fmt.Println("└─────┴─────────────────┴───────────────────┘")
 	fmt.Printf("Scan complete. (%d/%d hosts responded)\n", len(result.ReachableHosts), result.Total)
 }
