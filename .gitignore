@@ -17,6 +17,7 @@ go.work
 # Built binary
 neti
 main
+/build
 
 # IDE files
 .idea/
