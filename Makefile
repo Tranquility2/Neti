@@ -5,6 +5,11 @@ BINARY_NAME=neti
 GO_FILES=$(wildcard *.go)
 BUILD_DIR=build
 
+# Platform-specific binary names
+BINARY_LINUX=$(BINARY_NAME)
+BINARY_WINDOWS=$(BINARY_NAME).exe
+BINARY_MACOS=$(BINARY_NAME)-macos
+
 # Default target
 .PHONY: all
 all: build
@@ -18,6 +23,42 @@ $(BUILD_DIR)/$(BINARY_NAME): $(GO_FILES)
 	@mkdir -p $(BUILD_DIR)
 	go build -o $(BUILD_DIR)/$(BINARY_NAME) $(GO_FILES)
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)"
+
+# Build for Linux (default)
+.PHONY: build-linux
+build-linux: $(BUILD_DIR)/$(BINARY_LINUX)
+
+$(BUILD_DIR)/$(BINARY_LINUX): $(GO_FILES)
+	@echo "Building for Linux..."
+	@mkdir -p $(BUILD_DIR)
+	GOOS=linux GOARCH=amd64 go build -o $(BUILD_DIR)/$(BINARY_LINUX) $(GO_FILES)
+	@echo "Linux build complete: $(BUILD_DIR)/$(BINARY_LINUX)"
+
+# Build for Windows
+.PHONY: build-windows
+build-windows: $(BUILD_DIR)/$(BINARY_WINDOWS)
+
+$(BUILD_DIR)/$(BINARY_WINDOWS): $(GO_FILES)
+	@echo "Building for Windows..."
+	@mkdir -p $(BUILD_DIR)
+	GOOS=windows GOARCH=amd64 go build -o $(BUILD_DIR)/$(BINARY_WINDOWS) $(GO_FILES)
+	@echo "Windows build complete: $(BUILD_DIR)/$(BINARY_WINDOWS)"
+
+# Build for macOS
+.PHONY: build-macos
+build-macos: $(BUILD_DIR)/$(BINARY_MACOS)
+
+$(BUILD_DIR)/$(BINARY_MACOS): $(GO_FILES)
+	@echo "Building for macOS..."
+	@mkdir -p $(BUILD_DIR)
+	GOOS=darwin GOARCH=amd64 go build -o $(BUILD_DIR)/$(BINARY_MACOS) $(GO_FILES)
+	@echo "macOS build complete: $(BUILD_DIR)/$(BINARY_MACOS)"
+
+# Build for all platforms
+.PHONY: build-all
+build-all: build-linux build-windows build-macos
+	@echo "All platform builds complete!"
+	@ls -la $(BUILD_DIR)/
 
 # Run the program (requires subnet argument)
 .PHONY: run
@@ -86,18 +127,28 @@ dev-setup: deps
 help:
 	@echo "Neti Network Scanner - Available targets:"
 	@echo ""
-	@echo "  build      - Build the binary"
-	@echo "  run        - Run the program (use: make run SUBNET=192.168.1.0/24)"
-	@echo "  run-sudo   - Run with sudo (use: make run-sudo SUBNET=192.168.1.0/24)"
-	@echo "  deps       - Install dependencies"
-	@echo "  clean      - Clean build artifacts"
-	@echo "  fmt        - Format code"
-	@echo "  test       - Run tests"
-	@echo "  install    - Install binary to /usr/local/bin"
-	@echo "  uninstall  - Remove binary from /usr/local/bin"
-	@echo "  dev-setup  - Setup development environment"
-	@echo "  help       - Show this help message"
+	@echo "Build targets:"
+	@echo "  build          - Build the binary for current platform"
+	@echo "  build-linux    - Build for Linux (amd64)"
+	@echo "  build-windows  - Build for Windows (amd64)"
+	@echo "  build-macos    - Build for macOS (amd64)"
+	@echo "  build-all      - Build for all platforms"
+	@echo ""
+	@echo "Run targets:"
+	@echo "  run            - Run the program (use: make run SUBNET=192.168.1.0/24)"
+	@echo "  run-sudo       - Run with sudo (use: make run-sudo SUBNET=192.168.1.0/24)"
+	@echo ""
+	@echo "Other targets:"
+	@echo "  deps           - Install dependencies"
+	@echo "  clean          - Clean build artifacts"
+	@echo "  fmt            - Format code"
+	@echo "  test           - Run tests"
+	@echo "  install        - Install binary to /usr/local/bin"
+	@echo "  uninstall      - Remove binary from /usr/local/bin"
+	@echo "  dev-setup      - Setup development environment"
+	@echo "  help           - Show this help message"
 	@echo ""
 	@echo "Examples:"
-	@echo "  make run SUBNET=192.168.1.0/24"
-	@echo "  make run-sudo SUBNET=10.0.0.0/16"
+	@echo "  make build-all                    # Build for all platforms"
+	@echo "  make run-sudo SUBNET=192.168.1.0/24"
+	@echo "  make build-windows                # Build Windows executable"
