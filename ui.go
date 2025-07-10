@@ -37,9 +37,22 @@ func (ui *UI) ShowProgress(completed, total, found int) {
 // ShowResults displays the final scan results
 func (ui *UI) ShowResults(result *ScanResult) {
 	fmt.Println() // New line after progress
-	fmt.Printf("\nFound %d reachable hosts:\n", len(result.ReachableIPs))
-	for _, ip := range result.ReachableIPs {
-		fmt.Printf("✓ %s is reachable\n", ip)
+
+	if len(result.ReachableIPs) == 0 {
+		fmt.Println("\nNo reachable hosts found.")
+		fmt.Println("Scan complete.")
+		return
 	}
-	fmt.Println("Scan complete.")
+
+	fmt.Printf("\nFound %d reachable hosts:\n", len(result.ReachableIPs))
+	fmt.Println("┌─────┬─────────────────┬────────┐")
+	fmt.Println("│  #  │ IP Address      │ Status │")
+	fmt.Println("├─────┼─────────────────┼────────┤")
+
+	for i, ip := range result.ReachableIPs {
+		fmt.Printf("│ %3d │ %-15s │   ✓    │\n", i+1, ip)
+	}
+
+	fmt.Println("└─────┴─────────────────┴────────┘")
+	fmt.Printf("Scan complete. (%d/%d hosts responded)\n", len(result.ReachableIPs), result.Total)
 }
