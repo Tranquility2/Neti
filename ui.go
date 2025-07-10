@@ -38,21 +38,25 @@ func (ui *UI) ShowProgress(completed, total, found int) {
 func (ui *UI) ShowResults(result *ScanResult) {
 	fmt.Println() // New line after progress
 
-	if len(result.ReachableIPs) == 0 {
+	if len(result.ReachableHosts) == 0 {
 		fmt.Println("\nNo reachable hosts found.")
 		fmt.Println("Scan complete.")
 		return
 	}
 
-	fmt.Printf("\nFound %d reachable hosts:\n", len(result.ReachableIPs))
-	fmt.Println("┌─────┬─────────────────┬────────┐")
-	fmt.Println("│  #  │ IP Address      │ Status │")
-	fmt.Println("├─────┼─────────────────┼────────┤")
+	fmt.Printf("\nFound %d reachable hosts:\n", len(result.ReachableHosts))
+	fmt.Println("┌─────┬─────────────────┬───────────────────┬────────┐")
+	fmt.Println("│  #  │ IP Address      │ MAC Address       │ Status │")
+	fmt.Println("├─────┼─────────────────┼───────────────────┼────────┤")
 
-	for i, ip := range result.ReachableIPs {
-		fmt.Printf("│ %3d │ %-15s │   ✓    │\n", i+1, ip)
+	for i, host := range result.ReachableHosts {
+		mac := host.MAC
+		if mac == "" {
+			mac = "Unknown"
+		}
+		fmt.Printf("│ %3d │ %-15s │ %-17s │   ✓    │\n", i+1, host.IP, mac)
 	}
 
-	fmt.Println("└─────┴─────────────────┴────────┘")
-	fmt.Printf("Scan complete. (%d/%d hosts responded)\n", len(result.ReachableIPs), result.Total)
+	fmt.Println("└─────┴─────────────────┴───────────────────┴────────┘")
+	fmt.Printf("Scan complete. (%d/%d hosts responded)\n", len(result.ReachableHosts), result.Total)
 }

@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -12,11 +13,17 @@ import (
 	"golang.org/x/net/ipv4"
 )
 
+// HostInfo represents information about a discovered host
+type HostInfo struct {
+	IP  string
+	MAC string
+}
+
 // ScanResult represents the result of scanning a subnet
 type ScanResult struct {
-	ReachableIPs []string
-	Total        int
-	Completed    int
+	ReachableHosts []HostInfo
+	Total          int
+	Completed      int
 }
 
 // ProgressCallback is called during scanning to report progress
@@ -56,11 +63,11 @@ func (s *Scanner) GetIPsFromSubnet(subnet string) ([]string, error) {
 	return ips, nil
 }
 
-// ScanSubnet scans a list of IPs and returns reachable ones
+// ScanSubnet scans a list of IPs and returns reachable ones with MAC addresses
 func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *ScanResult {
 	var wg sync.WaitGroup
 	var mu sync.Mutex
-	var reachableIPs []string
+	var reachableHosts []HostInfo
 	var completed int
 
 	semaphore := make(chan struct{}, s.Concurrency)
@@ -74,8 +81,13 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 			defer func() { <-semaphore }()
 
 			if s.pingIP(ip) {
+				mac := s.getMACFromLocalInterfaces(ip)
+
 				mu.Lock()
-				reachableIPs = append(reachableIPs, ip)
+				reachableHosts = append(reachableHosts, HostInfo{
+					IP:  ip,
+					MAC: mac,
+				})
 				mu.Unlock()
 			}
 
@@ -83,7 +95,7 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 			mu.Lock()
 			completed++
 			if progressCallback != nil {
-				progressCallback(completed, total, len(reachableIPs))
+				progressCallback(completed, total, len(reachableHosts))
 			}
 			mu.Unlock()
 		}(ip)
@@ -92,9 +104,9 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 	wg.Wait()
 
 	// Sort results for consistent output
-	sort.Slice(reachableIPs, func(i, j int) bool {
-		ip1 := net.ParseIP(reachableIPs[i])
-		ip2 := net.ParseIP(reachableIPs[j])
+	sort.Slice(reachableHosts, func(i, j int) bool {
+		ip1 := net.ParseIP(reachableHosts[i].IP)
+		ip2 := net.ParseIP(reachableHosts[j].IP)
 		if ip1 != nil && ip2 != nil {
 			ip1v4 := ip1.To4()
 			ip2v4 := ip2.To4()
@@ -102,13 +114,13 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 				return binary.BigEndian.Uint32(ip1v4) < binary.BigEndian.Uint32(ip2v4)
 			}
 		}
-		return reachableIPs[i] < reachableIPs[j]
+		return reachableHosts[i].IP < reachableHosts[j].IP
 	})
 
 	return &ScanResult{
-		ReachableIPs: reachableIPs,
-		Total:        total,
-		Completed:    completed,
+		ReachableHosts: reachableHosts,
+		Total:          total,
+		Completed:      completed,
 	}
 }
 
@@ -164,6 +176,46 @@ func (s *Scanner) pingIP(ip string) bool {
 	}
 
 	return false
+}
+
+// getMACFromLocalInterfaces checks if the IP belongs to a local network interface
+func (s *Scanner) getMACFromLocalInterfaces(ip string) string {
+	targetIP := net.ParseIP(ip)
+	if targetIP == nil {
+		return ""
+	}
+
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return ""
+	}
+
+	for _, iface := range interfaces {
+		// Skip loopback and down interfaces
+		if iface.Flags&net.FlagLoopback != 0 || iface.Flags&net.FlagUp == 0 {
+			continue
+		}
+
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+
+		for _, addr := range addrs {
+			if ipNet, ok := addr.(*net.IPNet); ok {
+				// Check if the target IP is in the same network and could be the gateway
+				if ipNet.Contains(targetIP) {
+					// This might be a device on the same network segment
+					// For local interfaces, we can get the MAC directly
+					if targetIP.Equal(ipNet.IP) {
+						return strings.ToUpper(iface.HardwareAddr.String())
+					}
+				}
+			}
+		}
+	}
+
+	return ""
 }
 
 // incrementIP increments an IP address by one
