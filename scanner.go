@@ -5,7 +5,6 @@ import (
 	"net"
 	"os"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
@@ -33,6 +32,7 @@ type ProgressCallback func(completed, total, found int)
 type Scanner struct {
 	Concurrency int
 	Timeout     time.Duration
+	macResolver *MACResolver
 }
 
 // NewScanner creates a new scanner with default settings
@@ -40,6 +40,7 @@ func NewScanner() *Scanner {
 	return &Scanner{
 		Concurrency: 20,
 		Timeout:     500 * time.Millisecond,
+		macResolver: NewMACResolver(),
 	}
 }
 
@@ -81,7 +82,7 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 			defer func() { <-semaphore }()
 
 			if s.pingIP(ip) {
-				mac := s.getMACFromLocalInterfaces(ip)
+				mac := s.macResolver.GetMACAddress(ip)
 
 				mu.Lock()
 				reachableHosts = append(reachableHosts, HostInfo{
@@ -176,46 +177,6 @@ func (s *Scanner) pingIP(ip string) bool {
 	}
 
 	return false
-}
-
-// getMACFromLocalInterfaces checks if the IP belongs to a local network interface
-func (s *Scanner) getMACFromLocalInterfaces(ip string) string {
-	targetIP := net.ParseIP(ip)
-	if targetIP == nil {
-		return ""
-	}
-
-	interfaces, err := net.Interfaces()
-	if err != nil {
-		return ""
-	}
-
-	for _, iface := range interfaces {
-		// Skip loopback and down interfaces
-		if iface.Flags&net.FlagLoopback != 0 || iface.Flags&net.FlagUp == 0 {
-			continue
-		}
-
-		addrs, err := iface.Addrs()
-		if err != nil {
-			continue
-		}
-
-		for _, addr := range addrs {
-			if ipNet, ok := addr.(*net.IPNet); ok {
-				// Check if the target IP is in the same network and could be the gateway
-				if ipNet.Contains(targetIP) {
-					// This might be a device on the same network segment
-					// For local interfaces, we can get the MAC directly
-					if targetIP.Equal(ipNet.IP) {
-						return strings.ToUpper(iface.HardwareAddr.String())
-					}
-				}
-			}
-		}
-	}
-
-	return ""
 }
 
 // incrementIP increments an IP address by one

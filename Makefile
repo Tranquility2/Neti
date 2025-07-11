@@ -21,7 +21,7 @@ build: $(BUILD_DIR)/$(BINARY_NAME)
 $(BUILD_DIR)/$(BINARY_NAME): $(GO_FILES)
 	@echo "Building $(BINARY_NAME)..."
 	@mkdir -p $(BUILD_DIR)
-	go build -o $(BUILD_DIR)/$(BINARY_NAME) $(GO_FILES)
+	go build -o $(BUILD_DIR)/$(BINARY_NAME) .
 	@echo "Build complete: $(BUILD_DIR)/$(BINARY_NAME)"
 
 # Build for Linux (default)
@@ -31,7 +31,7 @@ build-linux: $(BUILD_DIR)/$(BINARY_LINUX)
 $(BUILD_DIR)/$(BINARY_LINUX): $(GO_FILES)
 	@echo "Building for Linux..."
 	@mkdir -p $(BUILD_DIR)
-	GOOS=linux GOARCH=amd64 go build -o $(BUILD_DIR)/$(BINARY_LINUX) $(GO_FILES)
+	GOOS=linux GOARCH=amd64 go build -o $(BUILD_DIR)/$(BINARY_LINUX) .
 	@echo "Linux build complete: $(BUILD_DIR)/$(BINARY_LINUX)"
 
 # Build for Windows
@@ -41,7 +41,7 @@ build-windows: $(BUILD_DIR)/$(BINARY_WINDOWS)
 $(BUILD_DIR)/$(BINARY_WINDOWS): $(GO_FILES)
 	@echo "Building for Windows..."
 	@mkdir -p $(BUILD_DIR)
-	GOOS=windows GOARCH=amd64 go build -o $(BUILD_DIR)/$(BINARY_WINDOWS) $(GO_FILES)
+	GOOS=windows GOARCH=amd64 go build -o $(BUILD_DIR)/$(BINARY_WINDOWS) .
 	@echo "Windows build complete: $(BUILD_DIR)/$(BINARY_WINDOWS)"
 
 # Build for macOS
@@ -51,7 +51,7 @@ build-macos: $(BUILD_DIR)/$(BINARY_MACOS)
 $(BUILD_DIR)/$(BINARY_MACOS): $(GO_FILES)
 	@echo "Building for macOS..."
 	@mkdir -p $(BUILD_DIR)
-	GOOS=darwin GOARCH=amd64 go build -o $(BUILD_DIR)/$(BINARY_MACOS) $(GO_FILES)
+	GOOS=darwin GOARCH=amd64 go build -o $(BUILD_DIR)/$(BINARY_MACOS) .
 	@echo "macOS build complete: $(BUILD_DIR)/$(BINARY_MACOS)"
 
 # Build for all platforms
@@ -67,7 +67,7 @@ run:
 		echo "Usage: make run SUBNET=192.168.1.0/24"; \
 		exit 1; \
 	fi
-	go run $(GO_FILES) $(SUBNET)
+	go run . $(SUBNET)
 
 # Run with sudo (for ICMP sockets)
 .PHONY: run-sudo
@@ -76,7 +76,7 @@ run-sudo:
 		echo "Usage: make run-sudo SUBNET=192.168.1.0/24"; \
 		exit 1; \
 	fi
-	sudo go run $(GO_FILES) $(SUBNET)
+	sudo go run . $(SUBNET)
 
 # Install dependencies
 .PHONY: deps
