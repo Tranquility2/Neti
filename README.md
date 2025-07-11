@@ -41,18 +41,7 @@ This will fetch the necessary Go packages.
 make deps
 ```
 
-**2. Download the OUI Vendor File**
-
-For manufacturer lookups, you need the OUI file from the IEEE. This only needs to be done once.
-
-```bash
-# This command is not yet in the Makefile, run this manually for now:
-go run . update-oui 
-# Or, if you have an older version of the code, you can add an `update-oui` command to your Makefile.
-```
-*Note: A future version should integrate this into the Makefile.*
-
-**3. Run a Scan**
+**2. Run a Scan**
 
 You must run the scanner with `sudo` because it requires raw socket permissions to send ICMP packets.
 
