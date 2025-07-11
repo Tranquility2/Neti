@@ -1,7 +1,6 @@
 //go:build darwin
-// +build darwin
 
-package main
+package macaddr
 
 // macOS implementation - will only be compiled on macOS/Darwin systems
 func init() {
@@ -10,12 +9,12 @@ func init() {
 }
 
 // loadDarwinARPTable loads all entries from the macOS ARP table into the cache
-func loadDarwinARPTable(m *MACResolver) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
+func loadDarwinARPTable(r *Resolver) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 
 	// Check if the table has already been loaded by another goroutine
-	if m.arpLoaded {
+	if r.arpLoaded {
 		return
 	}
 
@@ -24,5 +23,5 @@ func loadDarwinARPTable(m *MACResolver) {
 	// - parse the sockaddr structures to extract IP and MAC addresses
 
 	// For now, just mark as loaded - placeholder for future implementation
-	m.arpLoaded = true
+	r.arpLoaded = true
 }

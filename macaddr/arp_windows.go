@@ -1,6 +1,6 @@
 //go:build windows
 
-package main
+package macaddr
 
 import (
 	"fmt"
@@ -31,12 +31,12 @@ type MIB_IPNETROW struct {
 }
 
 // loadWindowsARPTable loads all entries from the Windows ARP table into the cache
-func loadWindowsARPTable(m *MACResolver) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
+func loadWindowsARPTable(r *Resolver) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 
 	// Check if the table has already been loaded by another goroutine
-	if m.arpLoaded {
+	if r.arpLoaded {
 		return
 	}
 
@@ -101,10 +101,10 @@ func loadWindowsARPTable(m *MACResolver) {
 
 			// Only store valid MACs
 			if mac != "00:00:00:00:00:00" {
-				m.cache[ipStr] = mac
+				r.cache[ipStr] = mac
 			}
 		}
 	}
 
-	m.arpLoaded = true
+	r.arpLoaded = true
 }

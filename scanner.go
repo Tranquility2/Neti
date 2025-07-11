@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"neti/macaddr"
+
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
 )
@@ -32,7 +34,7 @@ type ProgressCallback func(completed, total, found int)
 type Scanner struct {
 	Concurrency int
 	Timeout     time.Duration
-	macResolver *MACResolver
+	macResolver *macaddr.Resolver
 }
 
 // NewScanner creates a new scanner with default settings
@@ -40,7 +42,7 @@ func NewScanner() *Scanner {
 	return &Scanner{
 		Concurrency: 20,
 		Timeout:     500 * time.Millisecond,
-		macResolver: NewMACResolver(),
+		macResolver: macaddr.NewResolver(),
 	}
 }
 

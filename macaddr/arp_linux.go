@@ -1,12 +1,12 @@
 //go:build linux
-// +build linux
 
-package main
+package macaddr
 
 import (
 	"bufio"
 	"os"
 	"strings"
+	"net"
 )
 
 // Linux implementation - will only be compiled on Linux
@@ -16,12 +16,12 @@ func init() {
 }
 
 // loadLinuxARPTable is the Linux-specific implementation for loading the ARP table
-func loadLinuxARPTable(m *MACResolver) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
+func loadLinuxARPTable(r *Resolver) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
 
 	// Check if the table has already been loaded by another goroutine
-	if m.arpLoaded {
+	if r.arpLoaded {
 		return
 	}
 
@@ -41,10 +41,15 @@ func loadLinuxARPTable(m *MACResolver) {
 			ip := fields[0]
 			mac := fields[3]
 			if isValidMAC(mac) {
-				m.cache[ip] = strings.ToUpper(mac)
+				r.cache[ip] = strings.ToUpper(mac)
 			}
 		}
 	}
 
-	m.arpLoaded = true
+	r.arpLoaded = true
+}
+
+func isValidMAC(mac string) bool {
+	_, err := net.ParseMAC(mac)
+	return err == nil && mac != "00:00:00:00:00:00"
 }

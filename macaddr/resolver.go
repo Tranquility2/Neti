@@ -1,4 +1,4 @@
-package main
+package macaddr
 
 import (
 	"net"
@@ -7,20 +7,20 @@ import (
 	"sync"
 )
 
-// MACResolver handles MAC address resolution for different platforms
-type MACResolver struct {
+// Resolver handles MAC address resolution for different platforms.
+type Resolver struct {
 	// Cache of IP to MAC mappings to avoid repeated lookups
 	cache map[string]string
 	// Flag to indicate if ARP table has been loaded
 	arpLoaded bool
 	// Platform-specific ARP table loader function
-	loadARPTableFunc func(*MACResolver)
+	loadARPTableFunc func(*Resolver)
 	// Mutex to protect concurrent access to the cache and arpLoaded flag
 	mutex sync.Mutex
 }
 
-// Platform-specific function type for loading ARP tables
-type ARPTableLoader func(*MACResolver)
+// ARPTableLoader is a platform-specific function type for loading ARP tables.
+type ARPTableLoader func(*Resolver)
 
 // Platform-specific loaders that will be set in init()
 var (
@@ -29,14 +29,9 @@ var (
 	darwinARPLoader  ARPTableLoader
 )
 
-// init sets up the appropriate platform-specific functions
-func init() {
-	// These will be overridden in platform-specific files
-}
-
-// NewMACResolver creates a new MAC resolver
-func NewMACResolver() *MACResolver {
-	resolver := &MACResolver{
+// NewResolver creates a new MAC address resolver.
+func NewResolver() *Resolver {
+	resolver := &Resolver{
 		cache:     make(map[string]string),
 		arpLoaded: false,
 	}
@@ -62,76 +57,74 @@ func NewMACResolver() *MACResolver {
 	return resolver
 }
 
-// GetMACAddress gets the MAC address for an IP using platform-specific methods
-func (m *MACResolver) GetMACAddress(ip string) string {
+// GetMACAddress gets the MAC address for an IP using platform-specific methods.
+func (r *Resolver) GetMACAddress(ip string) string {
 	// First check the cache for previously resolved MAC addresses
-	if mac := m.getMACFromCache(ip); mac != "" {
+	if mac := r.getMACFromCache(ip); mac != "" {
 		return mac
 	}
 
 	// getMACFromLocalInterfaces can be slow, so we run it outside the lock.
 	// It doesn't access shared state.
-	if mac := m.getMACFromLocalInterfaces(ip); mac != "" {
+	if mac := r.getMACFromLocalInterfaces(ip); mac != "" {
 		// Lock before writing to the shared cache
-		m.mutex.Lock()
-		m.cache[ip] = mac
-		m.mutex.Unlock()
+		r.mutex.Lock()
+		r.cache[ip] = mac
+		r.mutex.Unlock()
 		return mac
 	}
 
 	// If not a local IP, try platform-specific ARP table lookups
-	m.ensureARPTableLoaded()
+	r.ensureARPTableLoaded()
 
 	// Check cache again after platform-specific ARP table load
-	if mac := m.getMACFromCache(ip); mac != "" {
+	if mac := r.getMACFromCache(ip); mac != "" {
 		return mac
 	}
 
 	// Try reloading the ARP table - it might have been updated
-	m.reloadARPTable()
+	r.reloadARPTable()
 
 	// Final cache check
-	return m.getMACFromCache(ip)
+	return r.getMACFromCache(ip)
 }
 
-// getMACFromCache checks if an IP address is in the cache
-func (m *MACResolver) getMACFromCache(ip string) string {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-	if mac, ok := m.cache[ip]; ok {
+// getMACFromCache checks if an IP address is in the cache.
+func (r *Resolver) getMACFromCache(ip string) string {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	if mac, ok := r.cache[ip]; ok {
 		return mac
 	}
 	return ""
 }
 
-// ensureARPTableLoaded makes sure the ARP table is loaded for the current platform
-func (m *MACResolver) ensureARPTableLoaded() {
-	m.mutex.Lock()
+// ensureARPTableLoaded makes sure the ARP table is loaded for the current platform.
+func (r *Resolver) ensureARPTableLoaded() {
+	r.mutex.Lock()
 	// Check if already loaded while holding the lock
-	if m.arpLoaded {
-		m.mutex.Unlock()
+	if r.arpLoaded {
+		r.mutex.Unlock()
 		return
 	}
-	m.mutex.Unlock() // Unlock before calling the loader function
+	r.mutex.Unlock() // Unlock before calling the loader function
 
 	// Use the platform-specific loader function if available
-	if m.loadARPTableFunc != nil {
-		m.loadARPTableFunc(m)
+	if r.loadARPTableFunc != nil {
+		r.loadARPTableFunc(r)
 	}
 }
 
-// reloadARPTable forces a reload of the platform-specific ARP table
-func (m *MACResolver) reloadARPTable() {
+// reloadARPTable forces a reload of the platform-specific ARP table.
+func (r *Resolver) reloadARPTable() {
 	// Reset the flag and reload. The lock inside the loader will handle synchronization.
-	if m.loadARPTableFunc != nil {
-		m.loadARPTableFunc(m)
+	if r.loadARPTableFunc != nil {
+		r.loadARPTableFunc(r)
 	}
 }
 
-// --- Helper Functions ---
-
-// getMACFromLocalInterfaces checks if the IP belongs to a local network interface
-func (m *MACResolver) getMACFromLocalInterfaces(ip string) string {
+// getMACFromLocalInterfaces checks if the IP belongs to a local network interface.
+func (r *Resolver) getMACFromLocalInterfaces(ip string) string {
 	targetIP := net.ParseIP(ip)
 	if targetIP == nil {
 		return ""
@@ -159,9 +152,4 @@ func (m *MACResolver) getMACFromLocalInterfaces(ip string) string {
 		}
 	}
 	return ""
-}
-
-func isValidMAC(mac string) bool {
-	_, err := net.ParseMAC(mac)
-	return err == nil && mac != "00:00:00:00:00:00"
 }
