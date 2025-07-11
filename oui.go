@@ -101,5 +101,5 @@ func mac2manufacturer(mac string) string {
 		return vendor
 	}
 
-	return "Unknown"
+	return ""
 }

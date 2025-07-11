@@ -5,6 +5,7 @@ import (
 	"net"
 	"os"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,8 +17,9 @@ import (
 
 // HostInfo represents information about a discovered host
 type HostInfo struct {
-	IP  string
-	MAC string
+	IP       string
+	MAC      string
+	Hostname string
 }
 
 // ScanResult represents the result of scanning a subnet
@@ -86,10 +88,21 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 			if s.pingIP(ip) {
 				mac := s.macResolver.GetMACAddress(ip)
 
+				// Perform reverse DNS lookup
+				var hostname string
+				names, err := net.LookupAddr(ip)
+				if err == nil && len(names) > 0 {
+					// Return the first name, removing the trailing dot.
+					hostname = strings.TrimSuffix(names[0], ".")
+				} else {
+					hostname = ""
+				}
+
 				mu.Lock()
 				reachableHosts = append(reachableHosts, HostInfo{
-					IP:  ip,
-					MAC: mac,
+					IP:       ip,
+					MAC:      mac,
+					Hostname: hostname,
 				})
 				mu.Unlock()
 			}
