@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/jedib0t/go-pretty/v6/progress"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
 // UI handles user interface operations
-type UI struct{}
+type UI struct {
+	progressWriter progress.Writer
+	tracker        *progress.Tracker
+}
 
 // NewUI creates a new UI instance
 func NewUI() *UI {
@@ -30,13 +34,24 @@ func (ui *UI) ShowError(message string, err error) {
 func (ui *UI) ShowScanStart(subnet string, totalIPs int) {
 	fmt.Printf("Scanning subnet: %s\n", subnet)
 	fmt.Printf("Found %d IPs to scan\n", totalIPs)
-	fmt.Printf("Scanning %d IPs...\n", totalIPs)
+
+	ui.tracker = &progress.Tracker{
+		Message: "Scanning",
+		Total:   int64(totalIPs),
+		Units:   progress.UnitsDefault,
+	}
+	ui.progressWriter = progress.NewWriter()
+	ui.progressWriter.SetOutputWriter(os.Stdout)
+	ui.progressWriter.SetStyle(progress.StyleBlocks)
+	ui.progressWriter.AppendTracker(ui.tracker)
+	go ui.progressWriter.Render()
 }
 
 // ShowProgress displays scanning progress
 func (ui *UI) ShowProgress(completed, total, found int) {
-	progress := float64(completed) / float64(total) * 100
-	fmt.Printf("\rProgress: %d/%d (%.1f%%) - Found %d hosts", completed, total, progress, found)
+	if ui.tracker != nil {
+		ui.tracker.SetValue(int64(completed))
+	}
 }
 
 // ShowResults displays the final scan results.
