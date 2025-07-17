@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/schollz/progressbar/v3"
+	"os"
 )
 
 // UI handles user interface operations
@@ -57,20 +59,16 @@ func (ui *UI) ShowResults(result *ScanResult) {
 		return
 	}
 
-	fmt.Printf("\nFound %d reachable hosts:\n", len(result.ReachableHosts))
-	fmt.Println("┌─────┬─────────────────┬───────────────────────────┬───────────────────┬──────────────────────────────────────────┐")
-	fmt.Println("│  #  │ IP Address      │ Hostname                  │ MAC Address       │ Manufacturer                             │")
-	fmt.Println("├─────┼─────────────────┼───────────────────────────┼───────────────────┼──────────────────────────────────────────┤")
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"#", "IP Address", "Hostname", "MAC Address", "Manufacturer"})
 
 	for i, host := range result.ReachableHosts {
 		mac := host.MAC
-		// if mac == "" {
-		// 	mac = "Unknown"
-		// }
 		vendor := mac2manufacturer(mac)
-		fmt.Printf("│ %3d │ %-15s │ %-25s │ %-17s │ %-40s │\n", i+1, host.IP, host.Hostname, mac, vendor)
+		t.AppendRow(table.Row{i + 1, host.IP, host.Hostname, mac, vendor})
 	}
 
-	fmt.Println("└─────┴─────────────────┴───────────────────────────┴───────────────────┴──────────────────────────────────────────┘")
+	t.Render()
 	fmt.Printf("Scan complete. (%d/%d hosts responded)\n", len(result.ReachableHosts), result.Total)
 }
