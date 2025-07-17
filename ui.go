@@ -61,6 +61,7 @@ func (ui *UI) ShowResults(result *ScanResult) {
 
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
+	t.SetStyle(table.StyleColoredDark)
 	t.AppendHeader(table.Row{"#", "IP Address", "Hostname", "MAC Address", "Manufacturer"})
 
 	for i, host := range result.ReachableHosts {
