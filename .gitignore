@@ -34,3 +34,6 @@ main
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# data files
+oui.txt
