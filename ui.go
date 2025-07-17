@@ -2,15 +2,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/jedib0t/go-pretty/v6/table"
-	"github.com/schollz/progressbar/v3"
 	"os"
+
+	"github.com/jedib0t/go-pretty/v6/table"
 )
 
 // UI handles user interface operations
-type UI struct {
-	progressBar *progressbar.ProgressBar
-}
+type UI struct{}
 
 // NewUI creates a new UI instance
 func NewUI() *UI {
@@ -32,21 +30,13 @@ func (ui *UI) ShowError(message string, err error) {
 func (ui *UI) ShowScanStart(subnet string, totalIPs int) {
 	fmt.Printf("Scanning subnet: %s\n", subnet)
 	fmt.Printf("Found %d IPs to scan\n", totalIPs)
-	fmt.Printf("Scanning %d IPs...", totalIPs)
-	ui.progressBar = progressbar.NewOptions(totalIPs,
-		progressbar.OptionSetDescription("Scanning"),
-		progressbar.OptionShowCount(),
-		progressbar.OptionSetWidth(30),
-		progressbar.OptionSetPredictTime(false),
-		progressbar.OptionClearOnFinish(),
-	)
+	fmt.Printf("Scanning %d IPs...\n", totalIPs)
 }
 
 // ShowProgress displays scanning progress
 func (ui *UI) ShowProgress(completed, total, found int) {
-	if ui.progressBar != nil {
-		ui.progressBar.Set(completed)
-	}
+	progress := float64(completed) / float64(total) * 100
+	fmt.Printf("\rProgress: %d/%d (%.1f%%) - Found %d hosts", completed, total, progress, found)
 }
 
 // ShowResults displays the final scan results.
