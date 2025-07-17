@@ -1,9 +1,14 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/schollz/progressbar/v3"
+)
 
 // UI handles user interface operations
-type UI struct{}
+type UI struct {
+	progressBar *progressbar.ProgressBar
+}
 
 // NewUI creates a new UI instance
 func NewUI() *UI {
@@ -25,13 +30,21 @@ func (ui *UI) ShowError(message string, err error) {
 func (ui *UI) ShowScanStart(subnet string, totalIPs int) {
 	fmt.Printf("Scanning subnet: %s\n", subnet)
 	fmt.Printf("Found %d IPs to scan\n", totalIPs)
-	fmt.Printf("Scanning %d IPs...\n", totalIPs)
+	fmt.Printf("Scanning %d IPs...", totalIPs)
+	ui.progressBar = progressbar.NewOptions(totalIPs,
+		progressbar.OptionSetDescription("Scanning"),
+		progressbar.OptionShowCount(),
+		progressbar.OptionSetWidth(30),
+		progressbar.OptionSetPredictTime(false),
+		progressbar.OptionClearOnFinish(),
+	)
 }
 
 // ShowProgress displays scanning progress
 func (ui *UI) ShowProgress(completed, total, found int) {
-	progress := float64(completed) / float64(total) * 100
-	fmt.Printf("\rProgress: %d/%d (%.1f%%) - Found %d hosts", completed, total, progress, found)
+	if ui.progressBar != nil {
+		ui.progressBar.Set(completed)
+	}
 }
 
 // ShowResults displays the final scan results.

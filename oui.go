@@ -22,7 +22,7 @@ var (
 // updateOUIFile fetches the OUI file from the IEEE website and saves it locally.
 func updateOUIFile() error {
 	if _, err := os.Stat(ouiFileName); err == nil {
-		fmt.Printf("\n(OUI file already exists, skipping download.)\n")
+		fmt.Printf("\n(OUI file already exists, skipping download.)")
 		return nil
 	}
 
