@@ -92,6 +92,9 @@ func mac2manufacturer(mac string) string {
 
 	// Normalize MAC to OUI prefix (e.g., 00:1A:2B:3C:4D:5E -> 001A2B)
 	macPrefix := strings.ToUpper(strings.ReplaceAll(mac, ":", ""))
+	if len(macPrefix) == 0 {
+		return ""
+	}
 	if len(macPrefix) < 6 {
 		return "Invalid MAC"
 	}
