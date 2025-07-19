@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/jedib0t/go-pretty/v6/progress"
 	"github.com/jedib0t/go-pretty/v6/table"
@@ -55,6 +56,18 @@ func (ui *UI) ShowProgress(completed, total, found int) {
 	}
 }
 
+func formatProcessTime(d time.Duration) string {
+	ms := d.Milliseconds()
+	if ms >= 1000 {
+		return fmt.Sprintf("\033[31m%ds\033[0m", int(ms/1000)) // Red color for seconds
+	} else if ms >= 50 {
+		return fmt.Sprintf("\033[33m%dms\033[0m", ms) // Yellow color
+	} else if ms <= 20 {
+		return fmt.Sprintf("\033[32m%dms\033[0m", ms) // Green color
+	}
+	return fmt.Sprintf("%dms", ms)
+}
+
 // ShowResults displays the final scan results.
 func (ui *UI) ShowResults(result *ScanResult) {
 	fmt.Println() // New line after progress
@@ -68,12 +81,13 @@ func (ui *UI) ShowResults(result *ScanResult) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(table.StyleColoredDark)
-	t.AppendHeader(table.Row{"#", "IP Address", "Hostname", "MAC Address", "Manufacturer"})
+	t.AppendHeader(table.Row{"#", "IP Address", "Hostname", "MAC Address", "Manufacturer", "Process Time"})
 
 	for i, host := range result.ReachableHosts {
 		mac := host.MAC
 		vendor := mac2manufacturer(mac)
-		t.AppendRow(table.Row{i + 1, host.IP, host.Hostname, mac, vendor})
+		processTimeStr := formatProcessTime(host.ProcessTime)
+		t.AppendRow(table.Row{i + 1, host.IP, host.Hostname, mac, vendor, processTimeStr})
 	}
 
 	t.Render()

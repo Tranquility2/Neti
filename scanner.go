@@ -17,9 +17,10 @@ import (
 
 // HostInfo represents information about a discovered host
 type HostInfo struct {
-	IP       string
-	MAC      string
-	Hostname string
+	IP          string
+	MAC         string
+	Hostname    string
+	ProcessTime time.Duration // Changed from time.Time to time.Duration
 }
 
 // ScanResult represents the result of scanning a subnet
@@ -85,6 +86,8 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 			semaphore <- struct{}{}
 			defer func() { <-semaphore }()
 
+			start := time.Now() // Start timing
+
 			if s.pingIP(ip) {
 				mac := s.macResolver.GetMACAddress(ip)
 
@@ -98,11 +101,14 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 					hostname = ""
 				}
 
+				processTime := time.Since(start) // Calculate duration
+
 				mu.Lock()
 				reachableHosts = append(reachableHosts, HostInfo{
-					IP:       ip,
-					MAC:      mac,
-					Hostname: hostname,
+					IP:          ip,
+					MAC:         mac,
+					Hostname:    hostname,
+					ProcessTime: processTime,
 				})
 				mu.Unlock()
 			}
