@@ -1,19 +1,28 @@
 package main
 
 import (
+	"flag"
 	"os"
+	"path/filepath"
 )
 
 func main() {
 	ui := NewUI()
 	scanner := NewScanner()
 
-	if len(os.Args) != 2 {
-		ui.ShowUsage(os.Args[0])
-		os.Exit(1)
+	var subnet string
+	flag.StringVar(&subnet, "subnet", "", "CIDR subnet to scan (e.g. 192.168.1.0/24)")
+	flag.Parse()
+
+	// Support positional argument as subnet
+	if subnet == "" && flag.NArg() > 0 {
+		subnet = flag.Arg(0)
 	}
 
-	subnet := os.Args[1]
+	if subnet == "" {
+		ui.ShowUsage(filepath.Base(os.Args[0]))
+		os.Exit(1)
+	}
 
 	ips, err := scanner.GetIPsFromSubnet(subnet)
 	if err != nil {

@@ -23,7 +23,8 @@ func NewUI() *UI {
 // ShowUsage displays usage information
 func (ui *UI) ShowUsage(programName string) {
 	fmt.Printf("Usage: %s <subnet>\n", programName)
-	fmt.Println("Example: go run main.go 192.168.1.0/24")
+	fmt.Printf("   or: %s -subnet=<subnet>\n", programName)
+	fmt.Printf("Example: %s 192.168.1.0/24\n", programName)
 }
 
 // ShowError displays an error message
