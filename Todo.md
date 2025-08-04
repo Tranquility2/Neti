@@ -8,7 +8,6 @@ This document outlines potential improvements and feature additions for the Neti
 - [x] Add TCP SYN scanning as an alternative to ICMP (useful when ICMP is blocked)
 - [ ] Implement UDP scanning for specific ports
 - [x] Add port scanning capabilities to discovered hosts
-- [x] Support for custom port ranges
 
 ### 2. Adaptive Timeout & Retry Logic
 - [ ] Implement adaptive timeouts based on network latency
@@ -55,7 +54,7 @@ This document outlines potential improvements and feature additions for the Neti
 - [ ] Global configuration options
 
 ### 8. Advanced Scanning Options
-- [ ] Custom port ranges for TCP scanning (`--ports 80,443,22-25`)
+- [x] Custom port ranges for TCP scanning (`--ports 80,443,22-25`)
 - [ ] Exclude IP ranges (`--exclude 192.168.1.1-10`)
 - [ ] Include/exclude patterns for hostnames (`--exclude-hostname "*printer*"`)
 - [ ] Custom ping packet size and count
@@ -196,10 +195,9 @@ This document outlines potential improvements and feature additions for the Neti
 4. **Input validation & safety** - Prevents misuse and accidents
 
 ### Phase 2 (Medium Priority - Core Features)
-1. **TCP SYN scanning** - Alternative when ICMP is blocked
-2. **Advanced scanning options** - Port ranges, exclusions
-3. **Enhanced progress display** - Better user feedback
-4. **Logging system** - Essential for debugging and audit
+1. **Advanced scanning options** - Port ranges, exclusions
+2. **Enhanced progress display** - Better user feedback
+3. **Logging system** - Essential for debugging and audit
 
 ### Phase 3 (Lower Priority - Advanced Features)
 1. **Database integration** - For enterprise and historical tracking
