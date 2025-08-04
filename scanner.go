@@ -93,15 +93,13 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 			start := time.Now() // Start timing for total process
 
 			// First, try ICMP ping and measure its response time
-			pingStart := time.Now()
 			icmpReachable := false
 			var icmpResponseTime time.Duration
-			if s.pingIP(ip) {
+			if reachable, responseTime := s.pingIP(ip); reachable {
 				icmpReachable = true
-				icmpResponseTime = time.Since(pingStart)
+				icmpResponseTime = responseTime
 			}
 			var openPorts []int
-
 			// If TCP scan is enabled, check for open ports
 			if s.UseTCP {
 				openPorts = s.getOpenPorts(ip)
@@ -190,16 +188,16 @@ func (s *Scanner) getOpenPorts(ip string) []int {
 	return openPorts
 }
 
-// pingIP sends an ICMP ping to an IP address
-func (s *Scanner) pingIP(ip string) bool {
+// pingIP sends an ICMP ping to an IP address and returns (success, duration)
+func (s *Scanner) pingIP(ip string) (bool, time.Duration) {
 	dst, err := net.ResolveIPAddr("ip4", ip)
 	if err != nil {
-		return false
+		return false, 0
 	}
 
 	conn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
 	if err != nil {
-		return false
+		return false, 0
 	}
 	defer conn.Close()
 
@@ -215,15 +213,16 @@ func (s *Scanner) pingIP(ip string) bool {
 
 	data, err := message.Marshal(nil)
 	if err != nil {
-		return false
+		return false, 0
 	}
 
 	deadline := time.Now().Add(s.Timeout)
 	conn.SetDeadline(deadline)
 
+	start := time.Now()
 	_, err = conn.WriteTo(data, dst)
 	if err != nil {
-		return false
+		return false, 0
 	}
 
 	reply := make([]byte, 1500)
@@ -236,12 +235,12 @@ func (s *Scanner) pingIP(ip string) bool {
 
 		if peerIP, ok := peer.(*net.IPAddr); ok {
 			if peerIP.IP.Equal(dst.IP) && len(reply) > 0 {
-				return true
+				return true, time.Since(start)
 			}
 		}
 	}
 
-	return false
+	return false, 0
 }
 
 // incrementIP increments an IP address by one

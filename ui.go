@@ -69,6 +69,10 @@ func formatProcessTime(d time.Duration) string {
 }
 
 func formatICMPTime(d time.Duration) string {
+	if d < time.Millisecond {
+		us := d.Microseconds()
+		return fmt.Sprintf("\033[36m%dµs\033[0m", us) // Cyan for sub-ms
+	}
 	ms := d.Milliseconds()
 	if ms >= 1000 {
 		return fmt.Sprintf("\033[31m%ds\033[0m", int(ms/1000)) // Red color for seconds
