@@ -5,10 +5,10 @@ This document outlines potential improvements and feature additions for the Neti
 ## 🚀 Performance & Scanning Improvements
 
 ### 1. Multiple Ping Strategies
-- [ ] Add TCP SYN scanning as an alternative to ICMP (useful when ICMP is blocked)
+- [x] Add TCP SYN scanning as an alternative to ICMP (useful when ICMP is blocked)
 - [ ] Implement UDP scanning for specific ports
-- [ ] Add port scanning capabilities to discovered hosts
-- [ ] Support for custom port ranges
+- [x] Add port scanning capabilities to discovered hosts
+- [x] Support for custom port ranges
 
 ### 2. Adaptive Timeout & Retry Logic
 - [ ] Implement adaptive timeouts based on network latency

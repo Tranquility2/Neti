@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/jedib0t/go-pretty/v6/progress"
@@ -23,8 +24,10 @@ func NewUI() *UI {
 // ShowUsage displays usage information
 func (ui *UI) ShowUsage(programName string) {
 	fmt.Printf("Usage: %s <subnet>\n", programName)
-	fmt.Printf("   or: %s -subnet=<subnet>\n", programName)
+	fmt.Printf("   or: %s -subnet=<subnet> [options]\n", programName)
 	fmt.Printf("Example: %s 192.168.1.0/24\n", programName)
+	fmt.Printf("Options:\n")
+	fmt.Printf("  -tcp    Use TCP connect scan instead of ICMP ping\n")
 }
 
 // ShowError displays an error message
@@ -69,8 +72,22 @@ func formatProcessTime(d time.Duration) string {
 	return fmt.Sprintf("%dms", ms)
 }
 
+// formatPorts formats a slice of port numbers as a comma-separated string
+func formatPorts(ports []int) string {
+	if len(ports) == 0 {
+		return "None"
+	}
+	
+	var portStrs []string
+	for _, port := range ports {
+		portStrs = append(portStrs, fmt.Sprintf("%d", port))
+	}
+	
+	return strings.Join(portStrs, ",")
+}
+
 // ShowResults displays the final scan results.
-func (ui *UI) ShowResults(result *ScanResult) {
+func (ui *UI) ShowResults(result *ScanResult, showPorts bool) {
 	fmt.Println() // New line after progress
 
 	if len(result.ReachableHosts) == 0 {
@@ -82,13 +99,37 @@ func (ui *UI) ShowResults(result *ScanResult) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(table.StyleColoredDark)
-	t.AppendHeader(table.Row{"#", "IP Address", "Hostname", "MAC Address", "Manufacturer", "Process Time"})
+	
+	// Adjust headers based on whether we're showing ports
+	if showPorts {
+		t.AppendHeader(table.Row{"#", "IP Address", "Hostname", "MAC Address", "Manufacturer", "Open Ports", "Found Via", "Process Time"})
+	} else {
+		t.AppendHeader(table.Row{"#", "IP Address", "Hostname", "MAC Address", "Manufacturer", "Process Time"})
+	}
 
 	for i, host := range result.ReachableHosts {
 		mac := host.MAC
 		vendor := mac2manufacturer(mac)
 		processTimeStr := formatProcessTime(host.ProcessTime)
-		t.AppendRow(table.Row{i + 1, host.IP, host.Hostname, mac, vendor, processTimeStr})
+		
+		// Handle empty fields for TCP-only hosts
+		if mac == "" {
+			mac = "N/A"
+		}
+		if host.Hostname == "" {
+			host.Hostname = "N/A"
+		}
+		if vendor == "" {
+			vendor = "N/A"
+		}
+		
+		if showPorts {
+			// Format open ports as comma-separated string
+			portsStr := formatPorts(host.OpenPorts)
+			t.AppendRow(table.Row{i + 1, host.IP, host.Hostname, mac, vendor, portsStr, host.FoundVia, processTimeStr})
+		} else {
+			t.AppendRow(table.Row{i + 1, host.IP, host.Hostname, mac, vendor, processTimeStr})
+		}
 	}
 
 	t.Render()
