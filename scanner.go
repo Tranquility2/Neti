@@ -18,11 +18,12 @@ import (
 
 // HostInfo represents information about a discovered host
 type HostInfo struct {
-	IP          string
-	MAC         string
-	Hostname    string
-	ProcessTime time.Duration
-	OpenPorts   []int // New field for discovered open ports
+	IP               string
+	MAC              string
+	Hostname         string
+	ProcessTime      time.Duration // Total processing time (DNS, MAC, etc.)
+	ICMPResponseTime time.Duration // ICMP ping response time
+	OpenPorts        []int         // Discovered open ports
 }
 
 // ScanResult represents the result of scanning a subnet
@@ -89,10 +90,16 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 			semaphore <- struct{}{}
 			defer func() { <-semaphore }()
 
-			start := time.Now() // Start timing
+			start := time.Now() // Start timing for total process
 
-			// First, try ICMP ping
-			icmpReachable := s.pingIP(ip)
+			// First, try ICMP ping and measure its response time
+			pingStart := time.Now()
+			icmpReachable := false
+			var icmpResponseTime time.Duration
+			if s.pingIP(ip) {
+				icmpReachable = true
+				icmpResponseTime = time.Since(pingStart)
+			}
 			var openPorts []int
 
 			if icmpReachable {
@@ -128,11 +135,12 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 
 				mu.Lock()
 				reachableHosts = append(reachableHosts, HostInfo{
-					IP:          ip,
-					MAC:         mac,
-					Hostname:    hostname,
-					ProcessTime: processTime,
-					OpenPorts:   openPorts,
+					IP:               ip,
+					MAC:              mac,
+					Hostname:         hostname,
+					ProcessTime:      processTime,
+					ICMPResponseTime: icmpResponseTime,
+					OpenPorts:        openPorts,
 				})
 				mu.Unlock()
 			}

@@ -63,6 +63,14 @@ func (ui *UI) ShowProgress(completed, total, found int) {
 func formatProcessTime(d time.Duration) string {
 	ms := d.Milliseconds()
 	if ms >= 1000 {
+		return fmt.Sprintf("%ds", int(ms/1000))
+	}
+	return fmt.Sprintf("%dms", ms)
+}
+
+func formatICMPTime(d time.Duration) string {
+	ms := d.Milliseconds()
+	if ms >= 1000 {
 		return fmt.Sprintf("\033[31m%ds\033[0m", int(ms/1000)) // Red color for seconds
 	} else if ms >= 50 {
 		return fmt.Sprintf("\033[33m%dms\033[0m", ms) // Yellow color
@@ -102,15 +110,16 @@ func (ui *UI) ShowResults(result *ScanResult, showPorts bool) {
 
 	// Adjust headers based on whether we're showing ports
 	if showPorts {
-		t.AppendHeader(table.Row{"#", "IP Address", "Hostname", "MAC Address", "Manufacturer", "Open Ports", "Process Time"})
+		t.AppendHeader(table.Row{"#", "IP Address", "Hostname", "MAC Address", "Manufacturer", "Open Ports", "ICMP Time", "Process Time"})
 	} else {
-		t.AppendHeader(table.Row{"#", "IP Address", "Hostname", "MAC Address", "Manufacturer", "Process Time"})
+		t.AppendHeader(table.Row{"#", "IP Address", "Hostname", "MAC Address", "Manufacturer", "ICMP Time", "Process Time"})
 	}
 
 	for i, host := range result.ReachableHosts {
 		mac := host.MAC
 		vendor := mac2manufacturer(mac)
 		processTimeStr := formatProcessTime(host.ProcessTime)
+		icmpTimeStr := formatICMPTime(host.ICMPResponseTime)
 
 		// Handle empty fields for TCP-only hosts
 		if mac == "" {
@@ -126,9 +135,9 @@ func (ui *UI) ShowResults(result *ScanResult, showPorts bool) {
 		if showPorts {
 			// Format open ports as comma-separated string
 			portsStr := formatPorts(host.OpenPorts)
-			t.AppendRow(table.Row{i + 1, host.IP, host.Hostname, mac, vendor, portsStr, processTimeStr})
+			t.AppendRow(table.Row{i + 1, host.IP, host.Hostname, mac, vendor, portsStr, icmpTimeStr, processTimeStr})
 		} else {
-			t.AppendRow(table.Row{i + 1, host.IP, host.Hostname, mac, vendor, processTimeStr})
+			t.AppendRow(table.Row{i + 1, host.IP, host.Hostname, mac, vendor, icmpTimeStr, processTimeStr})
 		}
 	}
 
