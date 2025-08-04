@@ -49,6 +49,7 @@ func (ui *UI) ShowScanStart(subnet string, totalIPs int) {
 	ui.progressWriter.SetOutputWriter(os.Stdout)
 	ui.progressWriter.SetStyle(progress.StyleBlocks)
 	ui.progressWriter.Style().Visibility.ETA = true
+	ui.progressWriter.Style().Options.TimeInProgressPrecision = time.Second
 	ui.progressWriter.AppendTracker(ui.tracker)
 	go ui.progressWriter.Render()
 }
