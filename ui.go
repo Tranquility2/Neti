@@ -102,7 +102,7 @@ func (ui *UI) ShowResults(result *ScanResult, showPorts bool) {
 
 	// Adjust headers based on whether we're showing ports
 	if showPorts {
-		t.AppendHeader(table.Row{"#", "IP Address", "Hostname", "MAC Address", "Manufacturer", "Open Ports", "Found Via", "Process Time"})
+		t.AppendHeader(table.Row{"#", "IP Address", "Hostname", "MAC Address", "Manufacturer", "Open Ports", "Process Time"})
 	} else {
 		t.AppendHeader(table.Row{"#", "IP Address", "Hostname", "MAC Address", "Manufacturer", "Process Time"})
 	}
@@ -126,7 +126,7 @@ func (ui *UI) ShowResults(result *ScanResult, showPorts bool) {
 		if showPorts {
 			// Format open ports as comma-separated string
 			portsStr := formatPorts(host.OpenPorts)
-			t.AppendRow(table.Row{i + 1, host.IP, host.Hostname, mac, vendor, portsStr, host.FoundVia, processTimeStr})
+			t.AppendRow(table.Row{i + 1, host.IP, host.Hostname, mac, vendor, portsStr, processTimeStr})
 		} else {
 			t.AppendRow(table.Row{i + 1, host.IP, host.Hostname, mac, vendor, processTimeStr})
 		}

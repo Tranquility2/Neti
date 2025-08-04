@@ -22,8 +22,7 @@ type HostInfo struct {
 	MAC         string
 	Hostname    string
 	ProcessTime time.Duration
-	OpenPorts   []int  // New field for discovered open ports
-	FoundVia    string // "ICMP", "TCP", or "ICMP+TCP"
+	OpenPorts   []int // New field for discovered open ports
 }
 
 // ScanResult represents the result of scanning a subnet
@@ -95,23 +94,15 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 			// First, try ICMP ping
 			icmpReachable := s.pingIP(ip)
 			var openPorts []int
-			var foundVia string
 
 			if icmpReachable {
-				foundVia = "ICMP"
 				// If TCP scanning is enabled, also check for open ports
 				if s.UseTCP {
 					openPorts = s.getOpenPorts(ip)
-					if len(openPorts) > 0 {
-						foundVia = "ICMP+TCP"
-					}
 				}
 			} else if s.UseTCP {
 				// If ICMP failed but TCP is enabled, try TCP-only discovery
 				openPorts = s.getOpenPorts(ip)
-				if len(openPorts) > 0 {
-					foundVia = "TCP"
-				}
 			}
 
 			// Host is considered reachable if found via ICMP or has open TCP ports
@@ -142,7 +133,6 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 					Hostname:    hostname,
 					ProcessTime: processTime,
 					OpenPorts:   openPorts,
-					FoundVia:    foundVia,
 				})
 				mu.Unlock()
 			}
