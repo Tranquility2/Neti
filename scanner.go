@@ -102,13 +102,8 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 			}
 			var openPorts []int
 
-			if icmpReachable {
-				// If TCP scanning is enabled, also check for open ports
-				if s.UseTCP {
-					openPorts = s.getOpenPorts(ip)
-				}
-			} else if s.UseTCP {
-				// If ICMP failed but TCP is enabled, try TCP-only discovery
+			// If TCP scan is enabled, check for open ports
+			if s.UseTCP {
 				openPorts = s.getOpenPorts(ip)
 			}
 
@@ -193,37 +188,6 @@ func (s *Scanner) getOpenPorts(ip string) []int {
 	}
 
 	return openPorts
-}
-
-// tcpConnect attempts to connect to common ports on the target IP
-func (s *Scanner) tcpConnect(ip string) bool {
-	// Try a few very common ports
-	commonPorts := []int{80, 443, 22}
-
-	var hasConnectionRefused bool
-
-	for _, port := range commonPorts {
-		address := net.JoinHostPort(ip, fmt.Sprintf("%d", port))
-		conn, err := net.DialTimeout("tcp", address, s.Timeout)
-		if err == nil {
-			// Successfully connected - host is definitely up
-			conn.Close()
-			return true
-		}
-
-		// Check the type of error
-		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-			// This was a timeout - continue to next port
-			continue
-		}
-
-		// If we get here, it's likely a "connection refused" error
-		// which means the host is up but the port is closed
-		hasConnectionRefused = true
-	}
-
-	// If we got connection refused on any port, the host is likely up
-	return hasConnectionRefused
 }
 
 // pingIP sends an ICMP ping to an IP address
