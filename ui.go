@@ -77,12 +77,12 @@ func formatPorts(ports []int) string {
 	if len(ports) == 0 {
 		return "None"
 	}
-	
+
 	var portStrs []string
 	for _, port := range ports {
 		portStrs = append(portStrs, fmt.Sprintf("%d", port))
 	}
-	
+
 	return strings.Join(portStrs, ",")
 }
 
@@ -99,7 +99,7 @@ func (ui *UI) ShowResults(result *ScanResult, showPorts bool) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(table.StyleColoredDark)
-	
+
 	// Adjust headers based on whether we're showing ports
 	if showPorts {
 		t.AppendHeader(table.Row{"#", "IP Address", "Hostname", "MAC Address", "Manufacturer", "Open Ports", "Found Via", "Process Time"})
@@ -111,7 +111,7 @@ func (ui *UI) ShowResults(result *ScanResult, showPorts bool) {
 		mac := host.MAC
 		vendor := mac2manufacturer(mac)
 		processTimeStr := formatProcessTime(host.ProcessTime)
-		
+
 		// Handle empty fields for TCP-only hosts
 		if mac == "" {
 			mac = "N/A"
@@ -122,7 +122,7 @@ func (ui *UI) ShowResults(result *ScanResult, showPorts bool) {
 		if vendor == "" {
 			vendor = "N/A"
 		}
-		
+
 		if showPorts {
 			// Format open ports as comma-separated string
 			portsStr := formatPorts(host.OpenPorts)

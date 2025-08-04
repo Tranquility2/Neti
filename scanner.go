@@ -22,8 +22,8 @@ type HostInfo struct {
 	MAC         string
 	Hostname    string
 	ProcessTime time.Duration
-	OpenPorts   []int         // New field for discovered open ports
-	FoundVia    string        // "ICMP", "TCP", or "ICMP+TCP"
+	OpenPorts   []int  // New field for discovered open ports
+	FoundVia    string // "ICMP", "TCP", or "ICMP+TCP"
 }
 
 // ScanResult represents the result of scanning a subnet
@@ -119,7 +119,7 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 
 			if isReachable {
 				var mac, hostname string
-				
+
 				// Only get MAC and hostname for ICMP-reachable hosts
 				if icmpReachable {
 					mac = s.macResolver.GetMACAddress(ip)
@@ -184,7 +184,7 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 func (s *Scanner) getOpenPorts(ip string) []int {
 	commonPorts := []int{80, 443, 22, 21, 23, 25, 53, 135, 139, 445}
 	var openPorts []int
-	
+
 	for _, port := range commonPorts {
 		address := net.JoinHostPort(ip, fmt.Sprintf("%d", port))
 		conn, err := net.DialTimeout("tcp", address, s.Timeout)
@@ -193,7 +193,7 @@ func (s *Scanner) getOpenPorts(ip string) []int {
 			openPorts = append(openPorts, port)
 		}
 	}
-	
+
 	return openPorts
 }
 
@@ -201,9 +201,9 @@ func (s *Scanner) getOpenPorts(ip string) []int {
 func (s *Scanner) tcpConnect(ip string) bool {
 	// Try a few very common ports
 	commonPorts := []int{80, 443, 22}
-	
+
 	var hasConnectionRefused bool
-	
+
 	for _, port := range commonPorts {
 		address := net.JoinHostPort(ip, fmt.Sprintf("%d", port))
 		conn, err := net.DialTimeout("tcp", address, s.Timeout)
@@ -212,18 +212,18 @@ func (s *Scanner) tcpConnect(ip string) bool {
 			conn.Close()
 			return true
 		}
-		
+
 		// Check the type of error
 		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 			// This was a timeout - continue to next port
 			continue
 		}
-		
+
 		// If we get here, it's likely a "connection refused" error
 		// which means the host is up but the port is closed
 		hasConnectionRefused = true
 	}
-	
+
 	// If we got connection refused on any port, the host is likely up
 	return hasConnectionRefused
 }
