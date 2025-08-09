@@ -16,7 +16,7 @@ This document outlines potential improvements and feature additions for the Neti
 - [ ] Auto-detect optimal concurrency based on system resources
 
 ### 3. Enhanced MAC Resolution
-- [ ] Implement ARP requests as fallback when cached ARP entries aren't available
+- [x] Implement ARP requests as fallback when cached ARP entries aren't available
 - [ ] Add Wake-on-LAN detection for sleeping devices
 - [ ] Support for IPv6 neighbor discovery
 - [ ] Enhanced ARP table parsing for all platforms
