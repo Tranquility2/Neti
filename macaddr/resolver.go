@@ -86,6 +86,14 @@ func (r *Resolver) GetMACAddress(ip string) string {
 	r.reloadARPTable()
 
 	// Final cache check
+	mac := r.getMACFromCache(ip)
+	if mac != "" {
+		return mac
+	}
+
+	// Fallback: send ARP request and reload ARP table
+	sendARPRequest(ip)
+	r.reloadARPTable()
 	return r.getMACFromCache(ip)
 }
 
@@ -97,6 +105,14 @@ func (r *Resolver) getMACFromCache(ip string) string {
 		return mac
 	}
 	return ""
+}
+
+// sendARPRequest sends a dummy UDP packet to the target IP to trigger an ARP request.
+func sendARPRequest(ip string) {
+	conn, err := net.Dial("udp", ip+":0")
+	if err == nil {
+		conn.Close()
+	}
 }
 
 // ensureARPTableLoaded makes sure the ARP table is loaded for the current platform.
