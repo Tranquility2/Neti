@@ -28,6 +28,7 @@ func (ui *UI) ShowUsage(programName string) {
 	fmt.Printf("Example: %s 192.168.1.0/24\n", programName)
 	fmt.Printf("Options:\n")
 	fmt.Printf("  -tcp    Use TCP connect scan instead of ICMP ping\n")
+	fmt.Printf("  -udp    Perform UDP probe scan for common ports (open|filtered detection)\n")
 }
 
 // ShowError displays an error message

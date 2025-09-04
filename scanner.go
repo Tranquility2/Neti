@@ -42,6 +42,7 @@ type Scanner struct {
 	Timeout     time.Duration
 	macResolver *macaddr.Resolver
 	UseTCP      bool
+	UseUDP      bool
 }
 
 // NewScanner creates a new scanner with default settings
@@ -100,10 +101,25 @@ func (s *Scanner) ScanSubnet(ips []string, progressCallback ProgressCallback) *S
 				icmpResponseTime = responseTime
 			}
 			var openPorts []int
-			// If TCP scan is enabled, check for open ports
+			// Separate TCP and UDP scanning so UDP probes are only run when the host is known
+			// to be responsive (ICMP reply) or TCP scan found something. This avoids marking
+			// many UDP ports as open|filtered for hosts that are likely down/unreachable.
+			var tcpPorts []int
+			var udpPorts []int
+
 			if s.UseTCP {
-				openPorts = s.getOpenPorts(ip)
+				tcpPorts = s.getOpenPorts(ip)
 			}
+
+			if s.UseUDP {
+				if icmpReachable || len(tcpPorts) > 0 {
+					// Only perform UDP probes when host shows some responsiveness
+					udpPorts = s.getOpenUDPPorts(ip)
+				}
+			}
+
+			openPorts = append(openPorts, tcpPorts...)
+			openPorts = append(openPorts, udpPorts...)
 
 			// Host is considered reachable if found via ICMP or has open TCP ports
 			isReachable := icmpReachable || len(openPorts) > 0
@@ -186,6 +202,47 @@ func (s *Scanner) getOpenPorts(ip string) []int {
 	}
 
 	return openPorts
+}
+
+func (s *Scanner) getOpenUDPPorts(ip string) []int {
+	udpPorts := []int{53, 67, 68, 69, 123, 137, 138, 161, 500, 514}
+	var open []int
+	dstIP := net.ParseIP(ip)
+
+	for _, port := range udpPorts {
+		raddr := &net.UDPAddr{IP: dstIP, Port: port}
+
+		conn, err := net.DialUDP("udp", nil, raddr)
+		if err != nil {
+			// Can't dial UDP to this port — skip it
+			continue
+		}
+
+		// Send a small probe. If the service replies on the same UDP socket we
+		// consider the port open. Otherwise we treat it as closed/filtered and
+		// do not report it.
+		_ = conn.SetDeadline(time.Now().Add(s.Timeout))
+		_, err = conn.Write([]byte("probe"))
+		if err != nil {
+			// Retry once on write error
+			_ = conn.SetDeadline(time.Now().Add(s.Timeout))
+			_, _ = conn.Write([]byte("probe"))
+		}
+
+		// Attempt to read a reply from the service.
+		buf := make([]byte, 1500)
+		_ = conn.SetReadDeadline(time.Now().Add(s.Timeout))
+		n, _, err := conn.ReadFrom(buf)
+		conn.Close()
+
+		if err == nil && n > 0 {
+			// Received application-layer response — consider port open.
+			open = append(open, port)
+		}
+		// If no reply or read error, do not mark the port as open (avoid false positives).
+	}
+
+	return open
 }
 
 // pingIP sends an ICMP ping to an IP address and returns (success, duration)

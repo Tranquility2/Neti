@@ -6,7 +6,7 @@ This document outlines potential improvements and feature additions for the Neti
 
 ### 1. Multiple Ping Strategies
 - [x] Add TCP SYN scanning as an alternative to ICMP (useful when ICMP is blocked)
-- [ ] Implement UDP scanning for specific ports
+- [x] Implement UDP scanning for specific ports
 - [x] Add port scanning capabilities to discovered hosts
 
 ### 2. Adaptive Timeout & Retry Logic
@@ -216,5 +216,5 @@ This document outlines potential improvements and feature additions for the Neti
 
 ---
 
-*Last updated: August 4, 2025*
+*Last updated: September 2023*
 *This roadmap is a living document and will be updated as features are implemented and new requirements emerge.*

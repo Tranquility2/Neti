@@ -12,12 +12,15 @@ func main() {
 
 	var subnet string
 	var useTCP bool
+	var useUDP bool
 	flag.StringVar(&subnet, "subnet", "", "CIDR subnet to scan (e.g. 192.168.1.0/24)")
 	flag.BoolVar(&useTCP, "tcp", false, "Use TCP connect scan instead of ICMP ping")
+	flag.BoolVar(&useUDP, "udp", false, "Perform UDP probe scan for common ports (open|filtered detection)")
 	flag.Parse()
 
 	// Set scan method
 	scanner.UseTCP = useTCP
+	scanner.UseUDP = useUDP
 
 	// Support positional argument as subnet
 	if subnet == "" && flag.NArg() > 0 {
@@ -41,5 +44,5 @@ func main() {
 
 	updateOUIFile()
 
-	ui.ShowResults(result, useTCP)
+	ui.ShowResults(result, useTCP || useUDP)
 }
